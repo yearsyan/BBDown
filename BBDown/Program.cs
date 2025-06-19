@@ -179,7 +179,6 @@ partial class Program
         //检测更新
         _ = CheckUpdateAsync();
         var server = new BBDownApiServer();
-        server.SetUpServer();
         server.Run(string.IsNullOrEmpty(listenUrl) ? defaultListenUrl : listenUrl);
     }
 

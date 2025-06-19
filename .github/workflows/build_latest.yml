@@ -179,3 +179,50 @@ jobs:
         with:
           name: BBDown_osx-arm64
           path: BBDown_${{ needs.set-date.outputs.date }}_osx-arm64.zip
+  
+  build-linux-x64-android:
+    runs-on: ubuntu-latest
+    needs: set-date
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: 'r28b'
+          add-to-path: true
+
+      - name: Set up environment variables
+        run: |
+          echo "ANDROID_NDK=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
+
+      - name: Publish [android]
+        run: |
+          PATH=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH dotnet publish BBDown -r linux-bionic-arm64 -p:PublishAotUsingRuntimePack=true -p:DisableUnsupportedError=true -c Release -o artifact-arm64
+          PATH=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH dotnet publish BBDown -r linux-bionic-x86 -p:PublishAotUsingRuntimePack=true -p:DisableUnsupportedError=true -c Release -o artifact-x64
+
+      - name: Package [android]
+        run: |
+          cd artifact-x64
+          zip ../BBDown_${{ needs.set-date.outputs.date }}_android-x64.zip BBDown
+          cd ../artifact-arm64
+          zip ../BBDown_${{ needs.set-date.outputs.date }}_android-arm64.zip BBDown
+
+      - name: Upload Artifact [android-x64]
+        uses: actions/upload-artifact@v4
+        with:
+          name: BBDown_android-x64
+          path: BBDown_${{ needs.set-date.outputs.date }}_android-x64.zip
+
+      - name: Upload Artifact [android-arm64]
+        uses: actions/upload-artifact@v4
+        with:
+          name: BBDown_android-arm64
+          path: BBDown_${{ needs.set-date.outputs.date }}_android-arm64.zip
